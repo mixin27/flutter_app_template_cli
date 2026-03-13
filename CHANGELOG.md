@@ -1,7 +1,10 @@
 ## 0.1.4
 
-- Add cli tool logger helper
-- Add test for cli tool
+- Added multi-template support (built-in, local, git, archive).
+- Added template registry commands (list/add/remove).
+- Added template manifests with variables and post-generate scripts.
+- Added starter Flutter template and creator documentation.
+- Improved token replacement (file and path tokens).
 
 ## 0.1.3
 
