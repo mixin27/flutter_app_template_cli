@@ -1,6 +1,9 @@
 name: flutter_app_template_cli
 description: CLI to generate a Flutter monorepo workspace with apps/ and packages/.
 version: 0.1.0
+homepage: https://github.com/mixin27/flutter_app_template_cli
+repository: https://github.com/mixin27/flutter_app_template_cli
+issue_tracker: https://github.com/mixin27/flutter_app_template_cli/issues
 topics:
   - flutter
   - cli
