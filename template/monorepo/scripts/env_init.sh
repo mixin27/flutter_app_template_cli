@@ -57,7 +57,31 @@ esac
 root="$(workspace_root)"
 source_template="${root}/.env.${environment}.example"
 fallback_template="${root}/env_examples/env.${environment}.example"
+env_examples_dir="${root}/env_examples"
 target_env="${root}/.env"
+
+envs=(development staging production)
+missing_selected=0
+
+for env in "${envs[@]}"; do
+  example_source="${env_examples_dir}/env.${env}.example"
+  if [[ -f "${example_source}" ]]; then
+    example_target="${root}/.env.${env}.example"
+    if [[ ! -f "${example_target}" ]]; then
+      cp "${example_source}" "${example_target}"
+    fi
+
+    env_target="${root}/.env.${env}"
+    if [[ ! -f "${env_target}" ]]; then
+      cp "${example_source}" "${env_target}"
+    fi
+  else
+    if [[ "${env}" == "${environment}" ]]; then
+      missing_selected=1
+    fi
+    echo "Warning: missing env template: ${example_source}" >&2
+  fi
+done
 
 template_path="${source_template}"
 if [[ ! -f "${template_path}" ]]; then
@@ -68,6 +92,10 @@ if [[ ! -f "${template_path}" ]]; then
     echo "Fallback template not found: ${fallback_template}" >&2
     exit 1
   fi
+fi
+
+if [[ ${missing_selected} -eq 1 && ! -f "${template_path}" ]]; then
+  exit 1
 fi
 
 if [[ -f "${target_env}" && ${force} -ne 1 ]]; then

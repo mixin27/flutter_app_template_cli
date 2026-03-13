@@ -224,6 +224,8 @@ class TemplateGenerator {
     await _ensureScriptsExecutable(workspaceDir);
 
     await _runWorkspaceSetup(workspaceDir);
+
+    await _cleanupScaffoldDirectories(workspaceDir);
   }
 
   Future<void> _runFlutterCreate({
@@ -320,8 +322,6 @@ class TemplateGenerator {
         await entity.copy(target.path);
       }
     }
-
-    await envExamplesDir.delete(recursive: true);
   }
 
   Future<void> _replaceTokensInDirectory(
@@ -431,8 +431,6 @@ class TemplateGenerator {
         await source.copy(target.path);
       }
     }
-
-    await hooksDir.delete(recursive: true);
   }
 
   Future<void> _ensureScriptsExecutable(Directory workspaceDir) async {
@@ -486,6 +484,18 @@ class TemplateGenerator {
     final exitCode = await process.exitCode;
     if (exitCode != 0) {
       throw 'make ${args.join(' ')} failed with exit code $exitCode';
+    }
+  }
+
+  Future<void> _cleanupScaffoldDirectories(Directory workspaceDir) async {
+    final envExamplesDir = Directory(p.join(workspaceDir.path, 'env_examples'));
+    if (envExamplesDir.existsSync()) {
+      await envExamplesDir.delete(recursive: true);
+    }
+
+    final hooksDir = Directory(p.join(workspaceDir.path, 'husky_hooks'));
+    if (hooksDir.existsSync()) {
+      await hooksDir.delete(recursive: true);
     }
   }
 }
