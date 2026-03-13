@@ -1300,14 +1300,15 @@ class ExternalTemplate implements Template {
         context.variables,
         manifest,
       );
+      final tokens = _buildTokenMap(variables);
 
       await _copyDirectory(
         templateRoot,
         context.workspaceDir,
         shouldCopy: _shouldCopyTemplateEntry,
+        pathTokens: tokens,
       );
 
-      final tokens = _buildTokenMap(variables);
       await _replaceTokensInDirectory(context.workspaceDir, tokens);
 
       await _runPostGenerate(
@@ -1676,7 +1677,7 @@ Map<String, String> _resolveTemplateVariables(
 ) {
   final resolved = Map<String, String>.from(baseVariables);
   if (manifest == null) {
-    return resolved;
+    return _addDerivedVariables(resolved);
   }
 
   for (final entry in manifest.variables.entries) {
@@ -1707,6 +1708,29 @@ Map<String, String> _resolveTemplateVariables(
     resolved[entry.key] = _renderString(entry.value, resolved);
   }
 
+  return _addDerivedVariables(resolved);
+}
+
+Map<String, String> _addDerivedVariables(Map<String, String> variables) {
+  final resolved = Map<String, String>.from(variables);
+  if (!resolved.containsKey('app_id')) {
+    final org = resolved['org'];
+    final appName = resolved['app_name'];
+    if (org != null && org.isNotEmpty && appName != null && appName.isNotEmpty) {
+      resolved['app_id'] = '$org.$appName';
+    }
+  }
+
+  final org = resolved['org'];
+  if (org != null && org.isNotEmpty) {
+    resolved['org_path'] = org.replaceAll('.', '/');
+  }
+
+  final appId = resolved['app_id'];
+  if (appId != null && appId.isNotEmpty) {
+    resolved['app_id_path'] = appId.replaceAll('.', '/');
+  }
+
   return resolved;
 }
 
@@ -1735,6 +1759,7 @@ Future<void> _copyDirectory(
   Directory destination, {
   bool overwrite = true,
   bool Function(String relativePath)? shouldCopy,
+  Map<String, String>? pathTokens,
   String? rootPath,
 }) async {
   rootPath ??= source.path;
@@ -1742,28 +1767,43 @@ Future<void> _copyDirectory(
 
   await for (final entity in source.list(followLinks: false)) {
     final relative = p.relative(entity.path, from: rootPath);
+    final mappedRelative =
+        pathTokens == null ? relative : _applyTokens(relative, pathTokens);
+    final mappedPath = p.normalize(p.join(destination.path, mappedRelative));
+    if (!p.isWithin(destination.path, mappedPath) &&
+        mappedPath != destination.path) {
+      throw 'Refusing to write outside destination: $mappedRelative';
+    }
     if (shouldCopy != null && !shouldCopy(relative)) {
       continue;
     }
-    final newPath = p.join(destination.path, relative);
     if (entity is File) {
-      final target = File(newPath);
+      final target = File(mappedPath);
       if (target.existsSync() && !overwrite) {
         continue;
       }
       await target.parent.create(recursive: true);
-      await entity.copy(newPath);
+      await entity.copy(mappedPath);
     } else if (entity is Directory) {
-      await Directory(newPath).create(recursive: true);
+      await Directory(mappedPath).create(recursive: true);
       await _copyDirectory(
         Directory(entity.path),
         destination,
         overwrite: overwrite,
         shouldCopy: shouldCopy,
+        pathTokens: pathTokens,
         rootPath: rootPath,
       );
     }
   }
+}
+
+String _applyTokens(String value, Map<String, String> tokens) {
+  var output = value;
+  for (final entry in tokens.entries) {
+    output = output.replaceAll(entry.key, entry.value);
+  }
+  return output;
 }
 
 Future<void> _replaceTokensInDirectory(
@@ -1802,10 +1842,32 @@ bool _isTextFile(String path) {
     '.json',
     '.xml',
     '.gradle',
+    '.kts',
     '.toml',
     '.properties',
     '.xcconfig',
     '.sh',
+    '.kt',
+    '.java',
+    '.swift',
+    '.m',
+    '.mm',
+    '.c',
+    '.cc',
+    '.cpp',
+    '.h',
+    '.hpp',
+    '.rc',
+    '.plist',
+    '.pbxproj',
+    '.xcscheme',
+    '.xcworkspacedata',
+    '.storyboard',
+    '.entitlements',
+    '.html',
+    '.htm',
+    '.css',
+    '.js',
   };
   if (textExtensions.contains(extension)) {
     return true;

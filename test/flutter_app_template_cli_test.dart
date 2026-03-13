@@ -109,6 +109,13 @@ variables:
     await File(p.join(templateDir.path, 'README.md')).writeAsString(
       '# __WORKSPACE_NAME__\nCustom: {{custom}}\n',
     );
+    final tokenDir = Directory(
+      p.join(templateDir.path, 'config', '__APP_NAME__'),
+    );
+    await tokenDir.create(recursive: true);
+    await File(p.join(tokenDir.path, 'settings.txt')).writeAsString(
+      'name=__APP_NAME__',
+    );
 
     final outputDir = Directory(p.join(tempDir.path, 'output'));
     await outputDir.create(recursive: true);
@@ -144,6 +151,13 @@ variables:
     final content = await readme.readAsString();
     expect(content, contains('# local_workspace'));
     expect(content, contains('Custom: overridden'));
+
+    final settingsFile = File(
+      p.join(workspaceDir.path, 'config', 'local_workspace', 'settings.txt'),
+    );
+    expect(settingsFile.existsSync(), isTrue);
+    final settingsContent = await settingsFile.readAsString();
+    expect(settingsContent, contains('name=local_workspace'));
   });
 
   final integrationEnabled =
