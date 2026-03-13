@@ -1,0 +1,44 @@
+flowchart TB
+  subgraph Repo["Repository"]
+    R1["lib/"]
+    R2["packages/"]
+    R3["docs/"]
+    R4["scripts/"]
+  end
+
+  subgraph Lib["lib/"]
+    L1["app/"]
+    L2["core/"]
+    L3["features/"]
+    L4["l10n/"]
+  end
+
+  subgraph Features["lib/features/"]
+    F1["auth/"]
+    F2["campaigns/"]
+    F3["coupons/"]
+    F4["loyalty/"]
+    F5["notifications/"]
+    F6["rewards/"]
+    F7["more/"]
+  end
+
+  subgraph FeatureShape["feature shape"]
+    S1["data/"]
+    S2["domain/"]
+    S3["presentation/"]
+    S4["di/"]
+  end
+
+  subgraph Packages["packages/"]
+    P1["app_core"]
+    P2["app_logger"]
+    P3["app_network"]
+    P4["app_storage"]
+    P5["app_ui_kit"]
+  end
+
+  R1 --> Lib
+  R2 --> Packages
+  L3 --> Features
+  F1 --> FeatureShape

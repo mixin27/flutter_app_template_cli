@@ -1,0 +1,17 @@
+flowchart TD
+  A["bootstrap(...)"] --> B["runZonedGuarded"]
+
+  B --> C["WidgetsFlutterBinding.ensureInitialized"]
+  C --> D["Configure framework error hooks"]
+  D --> E["Register font licenses"]
+  E --> F["Build StartupTask list"]
+  F --> G["StartupRunner.runCritical"]
+  G --> H["runApp(builder)"]
+  H --> I["StartupRunner.runDeferred (parallel)"]
+
+  G --> G1["configureDependencies (critical)"]
+  G --> G2["seedLocalSampleData (optional)"]
+
+  B --> Z["Zone error handler"]
+  Z --> Z1["StartupLogger.error"]
+  Z --> Z2["FlutterError.presentError (debug only)"]

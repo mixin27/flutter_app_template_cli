@@ -1,0 +1,26 @@
+sequenceDiagram
+  participant UI
+  participant BLoC
+  participant UseCase
+  participant Repo
+  participant Local
+  participant Remote
+
+  UI->>BLoC: request data
+  BLoC->>UseCase: execute()
+  UseCase->>Repo: get()
+  Repo->>Local: getCached()
+  Local-->>Repo: cached items
+
+  Repo->>Remote: fetch()
+  alt remote success
+    Remote-->>Repo: items
+    Repo->>Local: save(items)
+    Local-->>Repo: ok
+    Repo-->>UseCase: synced items
+  else remote failure
+    Repo-->>UseCase: cached items (if any) or failure
+  end
+
+  UseCase-->>BLoC: Result<T>
+  BLoC-->>UI: state update

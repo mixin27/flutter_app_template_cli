@@ -325,15 +325,21 @@ class TemplateGenerator {
       return;
     }
 
-    final toolsDir = Directory(p.join(workspaceDir.path, 'tools'));
-    if (!toolsDir.existsSync()) {
+    final scriptsDir = Directory(p.join(workspaceDir.path, 'scripts'));
+    if (!scriptsDir.existsSync()) {
       return;
     }
 
     final scripts = [
-      p.join(toolsDir.path, 'bootstrap.sh'),
-      p.join(toolsDir.path, 'analyze.sh'),
-      p.join(toolsDir.path, 'test.sh'),
+      p.join(scriptsDir.path, 'pub_get_all.sh'),
+      p.join(scriptsDir.path, 'analyze_all.sh'),
+      p.join(scriptsDir.path, 'test_all.sh'),
+      p.join(scriptsDir.path, 'format_all.sh'),
+      p.join(scriptsDir.path, 'codegen_all.sh'),
+      p.join(scriptsDir.path, 'clean_all.sh'),
+      p.join(scriptsDir.path, 'install_git_hooks.sh'),
+      p.join(workspaceDir.path, '.husky', 'commit-msg'),
+      p.join(workspaceDir.path, '.husky', 'pre-push'),
     ];
 
     for (final script in scripts) {

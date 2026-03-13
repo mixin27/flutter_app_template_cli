@@ -1,0 +1,7 @@
+include: package:commitlint_cli/commitlint.yaml
+
+rules:
+  # Allow any scope when present; scope remains optional (type or type(scope)).
+  scope-enum:
+    - 0
+    - always

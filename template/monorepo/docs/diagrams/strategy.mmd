@@ -1,0 +1,16 @@
+flowchart TD
+  A["App launch"] --> B["Bootstrap"]
+  B --> C["Configure dependencies"]
+  C --> D["Locale controller (persisted)"]
+  B --> E["Router"]
+  E --> F["Auth access strategy"]
+  F -->|"Requires auth"| G["Auth flow"]
+  F -->|"Allowed"| H["Feature navigation"]
+
+  H --> I["BLoC"]
+  I --> J["Use case"]
+  J --> K["Repository"]
+  K --> L["Local cache (Drift)"]
+  K --> M["Remote API (Dio)"]
+  M --> L
+  L --> I

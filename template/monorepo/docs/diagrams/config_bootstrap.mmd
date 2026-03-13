@@ -1,0 +1,14 @@
+flowchart TD
+  A["Process start"] --> B["AppConfig.fromEnvironment"]
+  B --> C["Resolve define (dart-define)"]
+  C --> D["Resolve envied (.env)"]
+  D --> E["Fallback defaults"]
+
+  A --> F["bootstrap()"]
+  F --> G["WidgetsFlutterBinding.ensureInitialized"]
+  F --> H["configureDependencies"]
+  H --> I["AppCoreModule"]
+  I --> J["AppLocaleController"]
+  H --> K["Feature modules"]
+  F --> L["runApp"]
+  F --> M["seedLocalSampleData (optional)"]

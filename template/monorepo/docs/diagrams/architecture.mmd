@@ -1,0 +1,25 @@
+flowchart LR
+  UI["UI (pages/widgets)"] --> BLOC["BLoC"]
+  BLOC --> UC["Use case"]
+  UC --> REPO["Repository"]
+  REPO --> LDS["Local datasource"]
+  REPO --> RDS["Remote datasource"]
+  RDS --> API["APIService/Dio"]
+  LDS --> DB["Drift DB"]
+
+  REPO -. "returns Result<T>" .-> BLOC
+
+  subgraph Domain["Domain layer"]
+    UC
+    REPO
+  end
+
+  subgraph Data["Data layer"]
+    LDS
+    RDS
+  end
+
+  subgraph Presentation["Presentation layer"]
+    UI
+    BLOC
+  end
