@@ -197,6 +197,7 @@ class TemplateGenerator {
     await _copyDirectory(templateDir, workspaceDir);
     await _ensureGitignore(workspaceDir);
     await _ensureEnvExampleTemplates(workspaceDir);
+    await _ensureWorkspaceDirectories(workspaceDir);
 
     final appDir = Directory(p.join(workspaceDir.path, 'apps', appName));
     await _runFlutterCreate(
@@ -321,6 +322,18 @@ class TemplateGenerator {
       if (!target.existsSync()) {
         await entity.copy(target.path);
       }
+    }
+  }
+
+  Future<void> _ensureWorkspaceDirectories(Directory workspaceDir) async {
+    final appsDir = Directory(p.join(workspaceDir.path, 'apps'));
+    if (!appsDir.existsSync()) {
+      await appsDir.create(recursive: true);
+    }
+
+    final packagesDir = Directory(p.join(workspaceDir.path, 'packages'));
+    if (!packagesDir.existsSync()) {
+      await packagesDir.create(recursive: true);
     }
   }
 

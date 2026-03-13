@@ -43,7 +43,7 @@ class _TasksView extends StatelessWidget {
           },
           child: ListView.separated(
             itemCount: state.tasks.length,
-            separatorBuilder: (_, __) => const Divider(height: 1),
+            separatorBuilder: (_, _) => const Divider(height: 1),
             itemBuilder: (context, index) {
               final task = state.tasks[index];
               return TaskListTile(

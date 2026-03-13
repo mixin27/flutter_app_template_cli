@@ -1,3 +1,8 @@
+## 0.1.3
+
+- Fixed deprecated usage in features
+- Make sure to exist packages/* folders
+
 ## 0.1.2
 
 - Fixed installing githooks
