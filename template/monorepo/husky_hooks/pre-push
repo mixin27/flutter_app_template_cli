@@ -1,0 +1,77 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [[ "${SKIP_PRE_PUSH:-0}" == "1" ]]; then
+  echo "SKIP_PRE_PUSH=1 set, skipping pre-push checks."
+  exit 0
+fi
+
+repo_root="$(git rev-parse --show-toplevel)"
+cd "${repo_root}"
+
+assert_safe_tracked_files() {
+  local path
+  local has_violation=0
+  local violations=""
+
+  while IFS= read -r path; do
+    [[ -z "${path}" ]] && continue
+    case "${path}" in
+      .env.example|.env.development.example|.env.staging.example|.env.production.example)
+        ;;
+      *)
+        has_violation=1
+        violations="${violations}${path}\n"
+        ;;
+    esac
+  done < <(git ls-files -- \
+    '.env' \
+    '.env.*' \
+    'apps/*/lib/app/config/app_envied.g.dart' \
+    'apps/*/android/key.properties' \
+    'apps/*/android/app/*.jks' \
+    'apps/*/android/app/*.keystore' \
+    'apps/*/android/app/src/*/google-services.json' \
+    'apps/*/android/firebase/*/google-services.json' \
+    'apps/*/ios/Runner/GoogleService-Info.plist' \
+    'apps/*/ios/firebase/*/GoogleService-Info.plist')
+
+  if [[ ${has_violation} -eq 1 ]]; then
+    echo "Blocked push: protected files are tracked:"
+    printf "%b" "${violations}"
+    echo
+    echo "Allowed env templates:"
+    echo "- .env.example"
+    echo "- .env.development.example"
+    echo "- .env.staging.example"
+    echo "- .env.production.example"
+    echo
+    echo "Fix example:"
+    echo "  git rm --cached <file>"
+    exit 1
+  fi
+}
+
+run_optional_staged_secret_scan() {
+  if [[ "${SKIP_SECRET_SCAN:-0}" == "1" ]]; then
+    echo "SKIP_SECRET_SCAN=1 set, skipping staged secret scan."
+    return
+  fi
+
+  if command -v gitleaks >/dev/null 2>&1; then
+    echo "Running staged secret scan (gitleaks)..."
+    ./scripts/secret_scan.sh --staged
+    return
+  fi
+
+  echo "gitleaks not found, skipping staged secret scan."
+  echo "Install gitleaks locally to enable pre-push staged secret scanning."
+}
+
+assert_safe_tracked_files
+run_optional_staged_secret_scan
+
+echo "Running pre-push checks..."
+./scripts/format_all.sh --check
+./scripts/check_all.sh
+echo "Pre-push checks passed."

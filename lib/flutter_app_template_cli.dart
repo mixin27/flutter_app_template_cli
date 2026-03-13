@@ -195,6 +195,8 @@ class TemplateGenerator {
     }
 
     await _copyDirectory(templateDir, workspaceDir);
+    await _ensureGitignore(workspaceDir);
+    await _ensureEnvExampleTemplates(workspaceDir);
 
     final appDir = Directory(p.join(workspaceDir.path, 'apps', appName));
     await _runFlutterCreate(
@@ -220,6 +222,8 @@ class TemplateGenerator {
     await _initializeRepositoryAndHooks(workspaceDir, appDir);
 
     await _ensureScriptsExecutable(workspaceDir);
+
+    await _runWorkspaceSetup(workspaceDir);
   }
 
   Future<void> _runFlutterCreate({
@@ -276,6 +280,48 @@ class TemplateGenerator {
         await _copyDirectory(Directory(entity.path), Directory(newPath));
       }
     }
+  }
+
+  Future<void> _ensureGitignore(Directory workspaceDir) async {
+    final source = File(p.join(workspaceDir.path, 'gitignore'));
+    if (!source.existsSync()) {
+      return;
+    }
+
+    final target = File(p.join(workspaceDir.path, '.gitignore'));
+    if (!target.existsSync()) {
+      await source.copy(target.path);
+    }
+
+    await source.delete();
+  }
+
+  Future<void> _ensureEnvExampleTemplates(Directory workspaceDir) async {
+    final envExamplesDir = Directory(p.join(workspaceDir.path, 'env_examples'));
+    if (!envExamplesDir.existsSync()) {
+      return;
+    }
+
+    final envExamplePattern = RegExp(r'^env\\.(.+)\\.example\$');
+    await for (final entity in envExamplesDir.list(followLinks: false)) {
+      if (entity is! File) {
+        continue;
+      }
+
+      final fileName = p.basename(entity.path);
+      final match = envExamplePattern.firstMatch(fileName);
+      if (match == null) {
+        continue;
+      }
+
+      final envName = match.group(1)!;
+      final target = File(p.join(workspaceDir.path, '.env.$envName.example'));
+      if (!target.existsSync()) {
+        await entity.copy(target.path);
+      }
+    }
+
+    await envExamplesDir.delete(recursive: true);
   }
 
   Future<void> _replaceTokensInDirectory(
@@ -358,6 +404,35 @@ class TemplateGenerator {
       _stderr('husky install failed: ${huskyResult.stderr}');
       throw 'husky install failed with exit code ${huskyResult.exitCode}';
     }
+
+    await _ensureHuskyHooks(workspaceDir);
+  }
+
+  Future<void> _ensureHuskyHooks(Directory workspaceDir) async {
+    final hooksDir = Directory(p.join(workspaceDir.path, 'husky_hooks'));
+    if (!hooksDir.existsSync()) {
+      return;
+    }
+
+    final huskyDir = Directory(p.join(workspaceDir.path, '.husky'));
+    if (!huskyDir.existsSync()) {
+      await huskyDir.create(recursive: true);
+    }
+
+    const hookNames = ['commit-msg', 'pre-push'];
+    for (final hookName in hookNames) {
+      final source = File(p.join(hooksDir.path, hookName));
+      if (!source.existsSync()) {
+        continue;
+      }
+
+      final target = File(p.join(huskyDir.path, hookName));
+      if (!target.existsSync()) {
+        await source.copy(target.path);
+      }
+    }
+
+    await hooksDir.delete(recursive: true);
   }
 
   Future<void> _ensureScriptsExecutable(Directory workspaceDir) async {
@@ -377,7 +452,9 @@ class TemplateGenerator {
       p.join(scriptsDir.path, 'format_all.sh'),
       p.join(scriptsDir.path, 'codegen_all.sh'),
       p.join(scriptsDir.path, 'clean_all.sh'),
+      p.join(scriptsDir.path, 'env_init.sh'),
       p.join(scriptsDir.path, 'install_git_hooks.sh'),
+      p.join(scriptsDir.path, 'setup_dev.sh'),
       p.join(scriptsDir.path, 'enable_native_flavors.sh'),
       p.join(workspaceDir.path, '.husky', 'commit-msg'),
       p.join(workspaceDir.path, '.husky', 'pre-push'),
@@ -387,6 +464,28 @@ class TemplateGenerator {
       if (File(script).existsSync()) {
         await Process.run('chmod', ['+x', script]);
       }
+    }
+  }
+
+  Future<void> _runWorkspaceSetup(Directory workspaceDir) async {
+    await _runMake(workspaceDir, ['env-init']);
+    await _runMake(workspaceDir, ['setup-dev', 'SKIP_ENV_INIT=1']);
+  }
+
+  Future<void> _runMake(Directory workspaceDir, List<String> args) async {
+    final process = await Process.start(
+      'make',
+      args,
+      workingDirectory: workspaceDir.path,
+      runInShell: true,
+    );
+
+    await stdout.addStream(process.stdout);
+    await stderr.addStream(process.stderr);
+
+    final exitCode = await process.exitCode;
+    if (exitCode != 0) {
+      throw 'make ${args.join(' ')} failed with exit code $exitCode';
     }
   }
 }

@@ -46,6 +46,21 @@ fi
   "${command[@]}"
 )
 
+hooks_source="${repo_root}/husky_hooks"
+hooks_target="${repo_root}/.husky"
+
+if [[ -d "${hooks_source}" ]]; then
+  mkdir -p "${hooks_target}"
+  if [[ -f "${hooks_source}/pre-push" ]]; then
+    cp "${hooks_source}/pre-push" "${hooks_target}/pre-push"
+  fi
+  if [[ -f "${hooks_source}/commit-msg" ]]; then
+    cp "${hooks_source}/commit-msg" "${hooks_target}/commit-msg"
+  fi
+elif [[ ! -f "${hooks_target}/pre-push" || ! -f "${hooks_target}/commit-msg" ]]; then
+  echo "No husky hook templates found at ${hooks_source}."
+fi
+
 chmod +x "${repo_root}/.husky/pre-push" "${repo_root}/.husky/commit-msg"
 
 echo "Git hooks path configured to .husky (husky)"
