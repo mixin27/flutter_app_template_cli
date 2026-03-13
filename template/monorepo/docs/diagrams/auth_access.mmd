@@ -1,14 +1,10 @@
 flowchart TD
   A["Navigation request"] --> B["AppRouter"]
-  B --> C["AuthConfig"]
+  B --> C["AuthAccessStrategy"]
+  C --> D["AuthFeatureRegistry"]
 
-  C -->|"mandatory login"| D["Check AuthService/AuthBloc session"]
-  D -->|"guest"| E["Redirect to /login?from=..."]
-  D -->|"authenticated"| H["Allow route"]
+  C -->|"requires auth"| E["Check AuthBloc session"]
+  E -->|"guest"| F["Redirect to /login?from=..."]
+  E -->|"authenticated"| G["Allow route"]
 
-  C -->|"optional login"| F["Allow route"]
-  F --> G["Protected screen?"]
-  G -->|"no"| H
-  G -->|"yes"| I["LoginRequiredWrapper"]
-  I -->|"guest"| J["Show in-place login"]
-  I -->|"authenticated"| H
+  C -->|"no auth required"| G

@@ -217,6 +217,8 @@ class TemplateGenerator {
       '__APP_NAME__': appName,
     });
 
+    await _initializeRepositoryAndHooks(workspaceDir, appDir);
+
     await _ensureScriptsExecutable(workspaceDir);
   }
 
@@ -312,12 +314,50 @@ class TemplateGenerator {
       '.json',
       '.xml',
       '.gradle',
+      '.toml',
       '.properties',
       '.xcconfig',
       '.sh',
     };
 
     return textExtensions.contains(extension);
+  }
+
+  Future<void> _initializeRepositoryAndHooks(
+    Directory workspaceDir,
+    Directory appDir,
+  ) async {
+    final appGitDir = Directory(p.join(appDir.path, '.git'));
+    if (appGitDir.existsSync()) {
+      await appGitDir.delete(recursive: true);
+    }
+
+    final workspaceGitDir = Directory(p.join(workspaceDir.path, '.git'));
+    if (!workspaceGitDir.existsSync()) {
+      final initResult = await Process.run(
+        'git',
+        ['init'],
+        workingDirectory: workspaceDir.path,
+        runInShell: true,
+      );
+
+      if (initResult.exitCode != 0) {
+        _stderr('git init failed: ${initResult.stderr}');
+        throw 'git init failed with exit code ${initResult.exitCode}';
+      }
+    }
+
+    final huskyResult = await Process.run(
+      'dart',
+      ['run', 'husky', 'install'],
+      workingDirectory: workspaceDir.path,
+      runInShell: true,
+    );
+
+    if (huskyResult.exitCode != 0) {
+      _stderr('husky install failed: ${huskyResult.stderr}');
+      throw 'husky install failed with exit code ${huskyResult.exitCode}';
+    }
   }
 
   Future<void> _ensureScriptsExecutable(Directory workspaceDir) async {
@@ -338,6 +378,7 @@ class TemplateGenerator {
       p.join(scriptsDir.path, 'codegen_all.sh'),
       p.join(scriptsDir.path, 'clean_all.sh'),
       p.join(scriptsDir.path, 'install_git_hooks.sh'),
+      p.join(scriptsDir.path, 'enable_native_flavors.sh'),
       p.join(workspaceDir.path, '.husky', 'commit-msg'),
       p.join(workspaceDir.path, '.husky', 'pre-push'),
     ];

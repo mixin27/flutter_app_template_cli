@@ -1,0 +1,184 @@
+name: Release Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      flavor:
+        description: Flavor to build
+        required: true
+        default: production
+        type: choice
+        options:
+          - development
+          - staging
+          - production
+      platform:
+        description: Platform target
+        required: true
+        default: both
+        type: choice
+        options:
+          - android
+          - ios
+          - both
+      sign_ios:
+        description: Build signed iOS IPA (requires iOS signing secrets)
+        required: true
+        default: false
+        type: boolean
+      ios_export_method:
+        description: iOS export method (used only when sign_ios=true)
+        required: true
+        default: app-store
+        type: choice
+        options:
+          - app-store
+          - ad-hoc
+          - enterprise
+          - development
+
+permissions:
+  contents: read
+
+jobs:
+  android-release:
+    name: Android Release (${{ inputs.flavor }})
+    if: ${{ inputs.platform == 'android' || inputs.platform == 'both' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    env:
+      FLAVOR: ${{ inputs.flavor }}
+      APP_NAME: __APP_NAME__
+      ANDROID_FIREBASE_DEVELOPMENT_JSON_B64: ${{ secrets.ANDROID_FIREBASE_DEVELOPMENT_JSON_B64 }}
+      ANDROID_FIREBASE_STAGING_JSON_B64: ${{ secrets.ANDROID_FIREBASE_STAGING_JSON_B64 }}
+      ANDROID_FIREBASE_PRODUCTION_JSON_B64: ${{ secrets.ANDROID_FIREBASE_PRODUCTION_JSON_B64 }}
+      IOS_FIREBASE_DEVELOPMENT_PLIST_B64: ${{ secrets.IOS_FIREBASE_DEVELOPMENT_PLIST_B64 }}
+      IOS_FIREBASE_STAGING_PLIST_B64: ${{ secrets.IOS_FIREBASE_STAGING_PLIST_B64 }}
+      IOS_FIREBASE_PRODUCTION_PLIST_B64: ${{ secrets.IOS_FIREBASE_PRODUCTION_PLIST_B64 }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Flutter Version
+        run: flutter --version
+
+      - name: Dependencies
+        run: ./scripts/pub_get_all.sh
+
+      - name: Code Generation
+        run: ./scripts/codegen_all.sh
+
+      - name: Install Firebase config from secrets
+        run: ./scripts/ci/install_firebase_from_secrets.sh "$FLAVOR" android
+
+      - name: Enable Firebase Android plugin when config exists
+        run: |
+          if [[ -f "apps/${APP_NAME}/android/app/src/${FLAVOR}/google-services.json" ]]; then
+            echo "ENABLE_FIREBASE_ANDROID=true" >> "$GITHUB_ENV"
+          else
+            echo "ENABLE_FIREBASE_ANDROID=false" >> "$GITHUB_ENV"
+          fi
+
+      - name: Setup Android signing
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: ./scripts/ci/setup_android_signing.sh --required
+
+      - name: Build Android App Bundle
+        working-directory: apps/${{ env.APP_NAME }}
+        run: flutter build appbundle --flavor "$FLAVOR" -t "lib/main_${FLAVOR}.dart" --release
+
+      - name: Upload Android artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-${{ inputs.flavor }}-aab
+          path: apps/${{ env.APP_NAME }}/build/app/outputs/bundle/${{ inputs.flavor }}Release/*.aab
+          if-no-files-found: error
+
+  ios-release:
+    name: iOS Release (${{ inputs.flavor }})
+    if: ${{ inputs.platform == 'ios' || inputs.platform == 'both' }}
+    runs-on: macos-latest
+    timeout-minutes: 60
+
+    env:
+      FLAVOR: ${{ inputs.flavor }}
+      APP_NAME: __APP_NAME__
+      ANDROID_FIREBASE_DEVELOPMENT_JSON_B64: ${{ secrets.ANDROID_FIREBASE_DEVELOPMENT_JSON_B64 }}
+      ANDROID_FIREBASE_STAGING_JSON_B64: ${{ secrets.ANDROID_FIREBASE_STAGING_JSON_B64 }}
+      ANDROID_FIREBASE_PRODUCTION_JSON_B64: ${{ secrets.ANDROID_FIREBASE_PRODUCTION_JSON_B64 }}
+      IOS_FIREBASE_DEVELOPMENT_PLIST_B64: ${{ secrets.IOS_FIREBASE_DEVELOPMENT_PLIST_B64 }}
+      IOS_FIREBASE_STAGING_PLIST_B64: ${{ secrets.IOS_FIREBASE_STAGING_PLIST_B64 }}
+      IOS_FIREBASE_PRODUCTION_PLIST_B64: ${{ secrets.IOS_FIREBASE_PRODUCTION_PLIST_B64 }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Flutter Version
+        run: flutter --version
+
+      - name: Dependencies
+        run: ./scripts/pub_get_all.sh
+
+      - name: Code Generation
+        run: ./scripts/codegen_all.sh
+
+      - name: Install Firebase config from secrets
+        run: ./scripts/ci/install_firebase_from_secrets.sh "$FLAVOR" ios
+
+      - name: Install iOS pods
+        working-directory: apps/${{ env.APP_NAME }}/ios
+        run: pod install
+
+      - name: Setup iOS signing
+        if: ${{ inputs.sign_ios == true }}
+        env:
+          IOS_P12_BASE64: ${{ secrets.IOS_P12_BASE64 }}
+          IOS_P12_PASSWORD: ${{ secrets.IOS_P12_PASSWORD }}
+          IOS_PROVISIONING_PROFILE_BASE64: ${{ secrets.IOS_PROVISIONING_PROFILE_BASE64 }}
+          IOS_KEYCHAIN_PASSWORD: ${{ secrets.IOS_KEYCHAIN_PASSWORD }}
+        run: ./scripts/ci/setup_ios_signing.sh --required
+
+      - name: Build signed iOS IPA
+        if: ${{ inputs.sign_ios == true }}
+        working-directory: apps/${{ env.APP_NAME }}
+        run: flutter build ipa --flavor "$FLAVOR" -t "lib/main_${FLAVOR}.dart" --release --export-method "${{ inputs.ios_export_method }}"
+
+      - name: Build unsigned iOS app
+        if: ${{ inputs.sign_ios != true }}
+        working-directory: apps/${{ env.APP_NAME }}
+        run: flutter build ios --flavor "$FLAVOR" -t "lib/main_${FLAVOR}.dart" --release --no-codesign
+
+      - name: Upload iOS signed artifact
+        if: ${{ inputs.sign_ios == true }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-${{ inputs.flavor }}-ipa
+          path: apps/${{ env.APP_NAME }}/build/ios/ipa/*.ipa
+          if-no-files-found: error
+
+      - name: Upload iOS unsigned artifact
+        if: ${{ inputs.sign_ios != true }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-${{ inputs.flavor }}-unsigned-app
+          path: apps/${{ env.APP_NAME }}/build/ios/iphoneos/Runner.app
+          if-no-files-found: error

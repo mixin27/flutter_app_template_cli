@@ -44,6 +44,8 @@ This project uses Dart pub workspace and multiple local packages. These scripts 
   - generates baseline tests for repository/usecase/bloc by default
 - `./scripts/prepare_firebase.sh --flavor <development|staging|production> [--platform all|android|ios] [--required]`
   - prepare flavor Firebase config for native builds
+- `./scripts/enable_native_flavors.sh [--platform all|android|ios] [--force]`
+  - scaffold optional native flavors (Android productFlavors + iOS schemes/xcconfig)
 - `./scripts/ci/install_firebase_from_secrets.sh <development|staging|production> [all|android|ios]`
   - CI helper to install flavor Firebase files from base64 secrets
 - `./scripts/ci/setup_android_signing.sh [--required]`
@@ -74,6 +76,7 @@ make deps-outdated
 make deps-upgrade
 make deps-upgrade-major
 make prepare-firebase FLAVOR=development
+make enable-native-flavors
 ```
 
 ## Typical team workflows

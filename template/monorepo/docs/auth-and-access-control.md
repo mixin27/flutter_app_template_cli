@@ -56,22 +56,29 @@ Other auth action events:
 
 ## Auth configuration
 
-Access gating is project-type based, not feature-based.
+Access gating is controlled by `AuthGateMode` and an `AuthAccessStrategy`.
+The default mode is feature-scoped so you can require login only for certain
+routes/features.
 
 ### Config
 
 - `AUTH_GATE_MODE`
   - `required` -> mandatory login (all non-auth routes require login)
   - `optional` -> optional login (no global redirects)
-  - `rewards_only` -> legacy alias for optional login
+  - `feature_scoped` -> require login only for specific features/routes
+- `AUTH_REQUIRED_FEATURES`
+  - comma-separated list of feature IDs (defaults to `tasks,profile`)
 
 ### How gating works
 
-1. Router receives navigation request.
-2. `AuthService` exposes current auth state.
-3. `AuthConfig` determines optional vs mandatory login behavior.
-4. Mandatory login redirects unauthenticated users to `/login`.
-5. Optional login uses `LoginRequiredWrapper` on protected screens (in-place login).
+1. Router receives a navigation request.
+2. `AuthBloc` exposes current session state.
+3. `AuthAccessStrategy` (from `AuthGateMode`) decides if the path requires auth.
+4. If auth is required and the user is a guest, redirect to `/login?from=...`.
+5. Otherwise the route is allowed.
+
+Feature-scoped mode uses `AuthFeatureRegistry` to map routes to feature IDs,
+then checks them against `AUTH_REQUIRED_FEATURES`.
 
 ## Auth routes
 
@@ -80,14 +87,19 @@ Access gating is project-type based, not feature-based.
 - `/login/email`
 - `/login/otp`
 
-Protected routes can use the `LoginRequiredWrapper` for optional login flows.
-
 ## Example policy setups
 
-Optional login (protect specific screens with `LoginRequiredWrapper`):
+Optional login (no global redirects):
 
 ```bash
 --dart-define=AUTH_GATE_MODE=optional
+```
+
+Feature-scoped login (require auth for specific features):
+
+```bash
+--dart-define=AUTH_GATE_MODE=feature_scoped
+--dart-define=AUTH_REQUIRED_FEATURES=tasks,profile
 ```
 
 Auth required for everything except auth pages:
@@ -96,8 +108,8 @@ Auth required for everything except auth pages:
 --dart-define=AUTH_GATE_MODE=required
 ```
 
-## Protect a screen in optional login
+## Protect a feature in feature-scoped mode
 
-1. Wrap the screen in `LoginRequiredWrapper` (in `AppRouter` or the page itself).
-2. Optionally pass a custom `loginWidget` if the default in-place login is not desired.
+1. Add a rule to `AuthFeatureRegistry` for the feature’s route prefix.
+2. Add the feature ID to `AUTH_REQUIRED_FEATURES` (or update the default list in `AppConfig`).
 3. Add tests for login-required behavior if the route is critical.

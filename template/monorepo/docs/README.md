@@ -14,8 +14,9 @@ This folder is the team-facing documentation for developing and maintaining `__A
 8. `router-service.md`
 9. `workspace-automation.md`
 10. `firebase-and-signing.md`
-11. `testing-and-release-checklist.md`
-12. `team-collaboration.md`
+11. `native-flavors.md`
+12. `testing-and-release-checklist.md`
+13. `team-collaboration.md`
 
 ## Document map
 
@@ -39,6 +40,8 @@ This folder is the team-facing documentation for developing and maintaining `__A
   - Workspace scripts, Makefile shortcuts, and CI command recommendations.
 - `firebase-and-signing.md`
   - Flavor-specific Firebase files, Android/iOS signing setup, and CI release secret mapping.
+- `native-flavors.md`
+  - Optional Android/iOS native flavor setup, schemes, and build commands.
 - `testing-and-release-checklist.md`
   - Test strategy, quality gates, PR checklist, and troubleshooting notes.
 - `team-collaboration.md`

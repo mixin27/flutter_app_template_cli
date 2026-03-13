@@ -8,7 +8,7 @@ The project uses a pragmatic Clean Architecture style:
 - `domain`: entities, repository contracts, use cases
 - `data`: repository implementations, local/remote datasources, models
 
-The app is local-first for core feature data (campaigns, coupons, loyalty, notifications):
+The app supports a local-first pattern for feature data when needed:
 
 1. Load cached local data.
 2. Try remote sync.
@@ -97,17 +97,14 @@ flowchart TB
     L1["app/"]
     L2["core/"]
     L3["features/"]
-    L4["l10n/"]
   end
 
   subgraph Features["lib/features/"]
     F1["auth/"]
-    F2["campaigns/"]
-    F3["coupons/"]
-    F4["loyalty/"]
-    F5["notifications/"]
-    F6["rewards/"]
-    F7["more/"]
+    F2["home/"]
+    F3["tasks/"]
+    F4["profile/"]
+    F5["devtools/"]
   end
 
   subgraph FeatureShape["feature shape"]
@@ -162,7 +159,7 @@ flowchart LR
   UC --> REPO["Repository"]
   REPO --> LDS["Local datasource"]
   REPO --> RDS["Remote datasource"]
-  RDS --> API["APIService/Dio"]
+  RDS --> API["ApiClient/Dio"]
   LDS --> DB["Drift DB"]
 
   REPO -. "returns Result<T>" .-> BLOC
@@ -188,18 +185,14 @@ flowchart LR
 ```mermaid
 flowchart TD
   A["Navigation request"] --> B["AppRouter"]
-  B --> C["AuthConfig"]
+  B --> C["AuthAccessStrategy"]
+  C --> D["AuthFeatureRegistry"]
 
-  C -->|"mandatory login"| D["Check AuthService/AuthBloc session"]
-  D -->|"guest"| E["Redirect to /login?from=..."]
-  D -->|"authenticated"| H["Allow route"]
+  C -->|"requires auth"| E["Check AuthBloc session"]
+  E -->|"guest"| F["Redirect to /login?from=..."]
+  E -->|"authenticated"| G["Allow route"]
 
-  C -->|"optional login"| F["Allow route"]
-  F --> G["Protected screen?"]
-  G -->|"no"| H
-  G -->|"yes"| I["LoginRequiredWrapper"]
-  I -->|"guest"| J["Show in-place login"]
-  I -->|"authenticated"| H
+  C -->|"no auth required"| G
 ```
 
 ### Config And Bootstrap

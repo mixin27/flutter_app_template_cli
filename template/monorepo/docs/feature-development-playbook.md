@@ -40,7 +40,7 @@ Use `Result<T>` for outputs.
 
 ## 4) Data layer
 
-- Create remote datasource (via `APIService`).
+- Create remote datasource (via `ApiClient` from `app_network`).
 - Create local datasource (Drift or token/storage abstraction as needed).
 - Implement repository and map errors with `FailureMapper.from(error)`.
 - Add scoped logging with `LoggerMixin` + `LogContext`.
@@ -68,13 +68,13 @@ Create feature DI module:
 
 If new pages are needed:
 
-- add route path constant to `RouterPath`
+- add route path constant to `AppRoutePaths`
 - add route in `AppRouter`
 
-If feature needs auth in optional login mode:
+If feature needs auth in feature-scoped mode:
 
-- wrap the page with `LoginRequiredWrapper`
-- optionally provide a custom `loginWidget` or deep-link `from` parameter
+- add a rule to `AuthFeatureRegistry` for the feature routes
+- add the feature ID to `AUTH_REQUIRED_FEATURES` (or update defaults in `AppConfig`)
 
 ## 8) Tests to add (minimum)
 

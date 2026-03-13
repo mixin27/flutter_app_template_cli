@@ -4,7 +4,7 @@ flowchart LR
   UC --> REPO["Repository"]
   REPO --> LDS["Local datasource"]
   REPO --> RDS["Remote datasource"]
-  RDS --> API["APIService/Dio"]
+  RDS --> API["ApiClient/Dio"]
   LDS --> DB["Drift DB"]
 
   REPO -. "returns Result<T>" .-> BLOC

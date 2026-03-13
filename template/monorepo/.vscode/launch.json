@@ -1,0 +1,70 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "App: Main (auto env)",
+      "request": "launch",
+      "type": "dart",
+      "cwd": "apps/__APP_NAME__",
+      "program": "lib/main.dart"
+    },
+    {
+      "name": "App: Development",
+      "request": "launch",
+      "type": "dart",
+      "cwd": "apps/__APP_NAME__",
+      "program": "lib/main_development.dart",
+      "args": [
+        "--dart-define=APP_ENV=development",
+        "--dart-define=API_BASE_URL=https://dev-api.example.com/v1",
+        "--dart-define=ENABLE_SAMPLE_SEED_DATA=true",
+        "--dart-define=ENABLE_VERBOSE_STARTUP_LOGS=true",
+        "--dart-define=AUTH_GATE_MODE=feature_scoped"
+      ]
+    },
+    {
+      "name": "App: Staging",
+      "request": "launch",
+      "type": "dart",
+      "cwd": "apps/__APP_NAME__",
+      "program": "lib/main_staging.dart",
+      "args": [
+        "--dart-define=APP_ENV=staging",
+        "--dart-define=API_BASE_URL=https://staging-api.example.com/v1",
+        "--dart-define=ENABLE_SAMPLE_SEED_DATA=false",
+        "--dart-define=ENABLE_VERBOSE_STARTUP_LOGS=true",
+        "--dart-define=AUTH_GATE_MODE=feature_scoped"
+      ]
+    },
+    {
+      "name": "App: Production",
+      "request": "launch",
+      "type": "dart",
+      "cwd": "apps/__APP_NAME__",
+      "program": "lib/main_production.dart",
+      "flutterMode": "release",
+      "args": [
+        "--dart-define=APP_ENV=production",
+        "--dart-define=API_BASE_URL=https://api.example.com/v1",
+        "--dart-define=ENABLE_SAMPLE_SEED_DATA=false",
+        "--dart-define=ENABLE_VERBOSE_STARTUP_LOGS=false",
+        "--dart-define=AUTH_GATE_MODE=feature_scoped"
+      ]
+    },
+    {
+      "name": "[Optional] App: Development (native flavor)",
+      "request": "launch",
+      "type": "dart",
+      "cwd": "apps/__APP_NAME__",
+      "program": "lib/main_development.dart",
+      "args": [
+        "--flavor=development",
+        "--dart-define=APP_ENV=development",
+        "--dart-define=API_BASE_URL=https://dev-api.example.com/v1",
+        "--dart-define=ENABLE_SAMPLE_SEED_DATA=true",
+        "--dart-define=ENABLE_VERBOSE_STARTUP_LOGS=true",
+        "--dart-define=AUTH_GATE_MODE=feature_scoped"
+      ]
+    }
+  ]
+}

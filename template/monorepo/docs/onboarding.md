@@ -77,7 +77,7 @@ Useful `--dart-define` values:
 - `API_BASE_URL=https://your-api.example.com/v1`
 - `ENABLE_SAMPLE_SEED_DATA=true|false`
 - `ENABLE_VERBOSE_STARTUP_LOGS=true|false`
-- `AUTH_GATE_MODE=optional|required` (or legacy `rewards_only` alias)
+- `AUTH_GATE_MODE=optional|feature_scoped|required` (legacy aliases: `rewards_only`, `rewards`, `claim_only`)
 
 Example:
 

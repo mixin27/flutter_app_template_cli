@@ -80,6 +80,6 @@ dart run build_runner build --delete-conflicting-outputs
 Check:
 
 - `AUTH_GATE_MODE`
-- `AuthConfig` (optional vs mandatory)
-- `LoginRequiredWrapper` usage on protected routes
+- `AUTH_REQUIRED_FEATURES`
+- `AuthAccessStrategy` + `AuthFeatureRegistry` mapping for protected routes
 - current `AuthBloc` state
