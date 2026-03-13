@@ -50,9 +50,7 @@ class _TasksView extends StatelessWidget {
                 task: task,
                 isUpdating: state.updatingTaskId == task.id,
                 onToggle: () {
-                  context
-                      .read<TasksBloc>()
-                      .add(TaskCompletionToggled(task.id));
+                  context.read<TasksBloc>().add(TaskCompletionToggled(task.id));
                 },
                 onTap: () => _openTaskDetail(context, task),
               );

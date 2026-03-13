@@ -39,7 +39,10 @@ class _ProfileView extends StatelessWidget {
         return ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            Text(profile.fullName, style: Theme.of(context).textTheme.headlineSmall),
+            Text(
+              profile.fullName,
+              style: Theme.of(context).textTheme.headlineSmall,
+            ),
             const SizedBox(height: 4),
             Text(profile.role),
             const SizedBox(height: 16),

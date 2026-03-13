@@ -28,12 +28,12 @@ class AppRouter {
     required AuthFeatureRegistry authFeatureRegistry,
     required AppLogger appLogger,
     required bool enableLogDevTools,
-  })  : _authBloc = authBloc,
-        _authAccessStrategy = authAccessStrategy,
-        _authFeatureRegistry = authFeatureRegistry,
-        _appLogger = appLogger,
-        _enableLogDevTools = enableLogDevTools,
-        _refreshNotifier = _RouterRefreshNotifier(authBloc.stream);
+  }) : _authBloc = authBloc,
+       _authAccessStrategy = authAccessStrategy,
+       _authFeatureRegistry = authFeatureRegistry,
+       _appLogger = appLogger,
+       _enableLogDevTools = enableLogDevTools,
+       _refreshNotifier = _RouterRefreshNotifier(authBloc.stream);
 
   static const homePath = AppRoutePaths.home;
   static const tasksPath = AppRoutePaths.tasks;
@@ -156,7 +156,7 @@ class AppRouter {
     final authState = _authBloc.state;
     final isAuthResolved =
         authState.status != AuthStatus.unknown &&
-            authState.status != AuthStatus.checking;
+        authState.status != AuthStatus.checking;
     if (!isAuthResolved) {
       return null;
     }
@@ -168,7 +168,7 @@ class AppRouter {
 
     final isAuthenticated =
         authState.status == AuthStatus.authenticated &&
-            (authState.session?.isAuthenticated ?? false);
+        (authState.session?.isAuthenticated ?? false);
     final isAuthPath = _isAuthPath(path);
     final requiresAuthentication = _authAccessStrategy
         .requiresAuthenticationForPath(path, _authFeatureRegistry);
@@ -244,10 +244,7 @@ class AppShell extends StatelessWidget {
           );
         },
         destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.home_outlined),
-            label: 'Home',
-          ),
+          NavigationDestination(icon: Icon(Icons.home_outlined), label: 'Home'),
           NavigationDestination(
             icon: Icon(Icons.check_circle_outline),
             label: 'Tasks',

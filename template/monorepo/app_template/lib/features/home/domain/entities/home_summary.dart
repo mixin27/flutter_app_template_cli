@@ -14,10 +14,5 @@ class HomeSummary extends Equatable {
   final int completedToday;
 
   @override
-  List<Object?> get props => [
-    greeting,
-    focus,
-    openTasks,
-    completedToday,
-  ];
+  List<Object?> get props => [greeting, focus, openTasks, completedToday];
 }

@@ -9,8 +9,8 @@ import 'profile_state.dart';
 class ProfileBloc extends ResultBloc<ProfileEvent, ProfileState>
     with LoggerMixin {
   ProfileBloc(this._getProfileUseCase, {AppLogger? logger})
-      : _logger = logger ?? AppLogger(enabled: false),
-        super(const ProfileState()) {
+    : _logger = logger ?? AppLogger(enabled: false),
+      super(const ProfileState()) {
     on<ProfileRequested>(_onProfileRequested);
   }
 
@@ -41,10 +41,7 @@ class ProfileBloc extends ResultBloc<ProfileEvent, ProfileState>
       },
       onSuccess: (profile) {
         log.info('Profile loaded');
-        return state.copyWith(
-          status: ProfileStatus.success,
-          profile: profile,
-        );
+        return state.copyWith(status: ProfileStatus.success, profile: profile);
       },
     );
   }

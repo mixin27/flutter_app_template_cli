@@ -34,10 +34,8 @@ class ProfileModule implements DependencyModule {
         () => GetProfileUseCase(getIt<ProfileRepository>()),
       )
       ..putFactoryIfAbsent<ProfileBloc>(
-        () => ProfileBloc(
-          getIt<GetProfileUseCase>(),
-          logger: getIt<AppLogger>(),
-        ),
+        () =>
+            ProfileBloc(getIt<GetProfileUseCase>(), logger: getIt<AppLogger>()),
       );
   }
 }

@@ -106,16 +106,16 @@ variables:
     description: Custom value
     default: default-value
 ''');
-    await File(p.join(templateDir.path, 'README.md')).writeAsString(
-      '# __WORKSPACE_NAME__\nCustom: {{custom}}\n',
-    );
+    await File(
+      p.join(templateDir.path, 'README.md'),
+    ).writeAsString('# __WORKSPACE_NAME__\nCustom: {{custom}}\n');
     final tokenDir = Directory(
       p.join(templateDir.path, 'config', '__APP_NAME__'),
     );
     await tokenDir.create(recursive: true);
-    await File(p.join(tokenDir.path, 'settings.txt')).writeAsString(
-      'name=__APP_NAME__',
-    );
+    await File(
+      p.join(tokenDir.path, 'settings.txt'),
+    ).writeAsString('name=__APP_NAME__');
 
     final outputDir = Directory(p.join(tempDir.path, 'output'));
     await outputDir.create(recursive: true);
@@ -166,8 +166,7 @@ variables:
   test(
     'creates a workspace (integration)',
     () async {
-      if (!await _commandExists('flutter') ||
-          !await _commandExists('git')) {
+      if (!await _commandExists('flutter') || !await _commandExists('git')) {
         fail('flutter and git are required to run this integration test.');
       }
 
@@ -238,7 +237,9 @@ variables:
         isFalse,
       );
       expect(
-        File(p.join(workspaceDir.path, '.env.development.example')).existsSync(),
+        File(
+          p.join(workspaceDir.path, '.env.development.example'),
+        ).existsSync(),
         isTrue,
       );
 

@@ -11,8 +11,8 @@ import 'package:yaml/yaml.dart';
 
 class CliLogger {
   CliLogger({StringSink? out, StringSink? err})
-      : _out = out ?? stdout,
-        _err = err ?? stderr;
+    : _out = out ?? stdout,
+      _err = err ?? stderr;
 
   final StringSink _out;
   final StringSink _err;
@@ -127,8 +127,7 @@ ArgParser _buildParser() {
     ..addFlag(
       'skip-setup',
       negatable: false,
-      help:
-          'Skip workspace setup steps (built-ins) or post-generate scripts.',
+      help: 'Skip workspace setup steps (built-ins) or post-generate scripts.',
     )
     ..addFlag(
       'allow-scripts',
@@ -143,7 +142,8 @@ ArgParser _buildParser() {
 
   templateParser.addCommand(
     'list',
-    ArgParser()..addFlag('help', abbr: 'h', negatable: false, help: 'Show usage.'),
+    ArgParser()
+      ..addFlag('help', abbr: 'h', negatable: false, help: 'Show usage.'),
   );
 
   final templateAddParser = ArgParser()
@@ -160,7 +160,8 @@ ArgParser _buildParser() {
   templateParser.addCommand('add', templateAddParser);
   templateParser.addCommand(
     'remove',
-    ArgParser()..addFlag('help', abbr: 'h', negatable: false, help: 'Show usage.'),
+    ArgParser()
+      ..addFlag('help', abbr: 'h', negatable: false, help: 'Show usage.'),
   );
 
   parser.addCommand('template', templateParser);
@@ -191,8 +192,8 @@ Future<int> _handleCreate(
   final org = (command['org'] as String).trim();
   final description = (command['description'] as String).trim();
   final outputDir = Directory(command['output'] as String).absolute;
-  final templateSelector = (command['template'] as String?)?.trim().isNotEmpty ==
-          true
+  final templateSelector =
+      (command['template'] as String?)?.trim().isNotEmpty == true
       ? (command['template'] as String).trim()
       : 'monorepo';
   final skipSetup = command['skip-setup'] == true;
@@ -232,9 +233,7 @@ Future<int> _handleCreate(
         logger.err(
           'App name must differ from workspace name for the monorepo template.',
         );
-        logger.err(
-          'Try: --app-name ${workspaceName}_app',
-        );
+        logger.err('Try: --app-name ${workspaceName}_app');
         return _ExitCodes.usage;
       }
       appName = '${workspaceName}_app';
@@ -543,10 +542,7 @@ void _printTemplateUsage(ArgParser root, CliLogger logger) {
   logger.out(root.usage);
 }
 
-void _printTemplateListUsage(
-  ArgParser root,
-  CliLogger logger,
-) {
+void _printTemplateListUsage(ArgParser root, CliLogger logger) {
   final listParser = _getCommandParser(root, const ['template', 'list']);
   logger.out('flutter_app_template_cli template list');
   logger.out('');
@@ -557,10 +553,7 @@ void _printTemplateListUsage(
   logger.out(root.usage);
 }
 
-void _printTemplateAddUsage(
-  ArgParser root,
-  CliLogger logger,
-) {
+void _printTemplateAddUsage(ArgParser root, CliLogger logger) {
   final addParser = _getCommandParser(root, const ['template', 'add']);
   logger.out('flutter_app_template_cli template add <name> <source>');
   logger.out('');
@@ -571,10 +564,7 @@ void _printTemplateAddUsage(
   logger.out(root.usage);
 }
 
-void _printTemplateRemoveUsage(
-  ArgParser root,
-  CliLogger logger,
-) {
+void _printTemplateRemoveUsage(ArgParser root, CliLogger logger) {
   final removeParser = _getCommandParser(root, const ['template', 'remove']);
   logger.out('flutter_app_template_cli template remove <name>');
   logger.out('');
@@ -654,7 +644,7 @@ class BuiltInTemplateDescriptor {
 
 class TemplateManager {
   TemplateManager(this._packageRoot, this._registry, this._logger)
-      : _builtIns = {} {
+    : _builtIns = {} {
     _builtIns['monorepo'] = BuiltInTemplateDescriptor(
       name: 'monorepo',
       description: 'Flutter monorepo workspace with app template.',
@@ -899,10 +889,7 @@ class TemplateRegistry {
       for (final entry in templates.entries) {
         final value = entry.value;
         if (value is Map<String, dynamic>) {
-          result[entry.key] = RegisteredTemplate.fromJson(
-            entry.key,
-            value,
-          );
+          result[entry.key] = RegisteredTemplate.fromJson(entry.key, value);
         }
       }
       return result;
@@ -918,8 +905,7 @@ class TemplateRegistry {
     final encoded = <String, dynamic>{
       'version': 1,
       'templates': {
-        for (final entry in templates.entries)
-          entry.key: entry.value.toJson(),
+        for (final entry in templates.entries) entry.key: entry.value.toJson(),
       },
     };
     final content = const JsonEncoder.withIndent('  ').convert(encoded);
@@ -929,7 +915,9 @@ class TemplateRegistry {
 
 File _registryFile() {
   final configDir = _configDirectory();
-  return File(p.join(configDir.path, 'flutter_app_template_cli', 'templates.json'));
+  return File(
+    p.join(configDir.path, 'flutter_app_template_cli', 'templates.json'),
+  );
 }
 
 Directory _configDirectory() {
@@ -966,7 +954,8 @@ class RegisteredTemplate {
 
   static RegisteredTemplate fromJson(String name, Map<String, dynamic> json) {
     final typeValue = json['type'] as String?;
-    final type = _templateSourceTypeFromString(typeValue) ??
+    final type =
+        _templateSourceTypeFromString(typeValue) ??
         TemplateSourceType.directory;
     return RegisteredTemplate(
       name,
@@ -983,7 +972,7 @@ class RegisteredTemplate {
 
 class MonorepoTemplate implements Template {
   MonorepoTemplate(this._packageRoot, {CliLogger? logger})
-      : _logger = logger ?? CliLogger();
+    : _logger = logger ?? CliLogger();
 
   final String _packageRoot;
   final CliLogger _logger;
@@ -1087,11 +1076,7 @@ class MonorepoTemplate implements Template {
       appDir.path,
     ];
 
-    final process = await Process.start(
-      'flutter',
-      args,
-      runInShell: true,
-    );
+    final process = await Process.start('flutter', args, runInShell: true);
 
     await stdout.addStream(process.stdout);
     await stderr.addStream(process.stderr);
@@ -1275,7 +1260,7 @@ class MonorepoTemplate implements Template {
 
 class ExternalTemplate implements Template {
   ExternalTemplate(this._source, {CliLogger? logger})
-      : _logger = logger ?? CliLogger();
+    : _logger = logger ?? CliLogger();
 
   final TemplateSource _source;
   final CliLogger _logger;
@@ -1300,10 +1285,7 @@ class ExternalTemplate implements Template {
     try {
       final templateRoot = _selectTemplateRoot(materialized.root, _source.path);
       final manifest = await TemplateManifest.load(templateRoot, _logger);
-      final variables = _resolveTemplateVariables(
-        context.variables,
-        manifest,
-      );
+      final variables = _resolveTemplateVariables(context.variables, manifest);
       final tokens = _buildTokenMap(variables);
 
       await _copyDirectory(
@@ -1315,11 +1297,7 @@ class ExternalTemplate implements Template {
 
       await _replaceTokensInDirectory(context.workspaceDir, tokens);
 
-      await _runPostGenerate(
-        context,
-        manifest,
-        templateRoot: templateRoot,
-      );
+      await _runPostGenerate(context, manifest, templateRoot: templateRoot);
     } finally {
       if (materialized.shouldCleanup) {
         await materialized.root.delete(recursive: true);
@@ -1404,8 +1382,9 @@ class TemplateMaterializer {
   }
 
   Future<MaterializedTemplate> _cloneGit(TemplateSource source) async {
-    final tempDir =
-        await Directory.systemTemp.createTemp('flutter_app_template_git_');
+    final tempDir = await Directory.systemTemp.createTemp(
+      'flutter_app_template_git_',
+    );
 
     final cloneArgs = <String>['clone'];
     if (source.ref == null) {
@@ -1413,11 +1392,7 @@ class TemplateMaterializer {
     }
     cloneArgs.addAll([source.source, tempDir.path]);
 
-    final cloneResult = await Process.run(
-      'git',
-      cloneArgs,
-      runInShell: true,
-    );
+    final cloneResult = await Process.run('git', cloneArgs, runInShell: true);
 
     if (cloneResult.exitCode != 0) {
       throw 'git clone failed: ${cloneResult.stderr}';
@@ -1448,8 +1423,9 @@ class TemplateMaterializer {
     }
 
     final archive = _decodeArchive(bytes, source.source);
-    final tempDir =
-        await Directory.systemTemp.createTemp('flutter_app_template_archive_');
+    final tempDir = await Directory.systemTemp.createTemp(
+      'flutter_app_template_archive_',
+    );
     _extractArchiveToDirectory(archive, tempDir);
     return MaterializedTemplate(tempDir, shouldCleanup: true);
   }
@@ -1720,7 +1696,10 @@ Map<String, String> _addDerivedVariables(Map<String, String> variables) {
   if (!resolved.containsKey('app_id')) {
     final org = resolved['org'];
     final appName = resolved['app_name'];
-    if (org != null && org.isNotEmpty && appName != null && appName.isNotEmpty) {
+    if (org != null &&
+        org.isNotEmpty &&
+        appName != null &&
+        appName.isNotEmpty) {
       resolved['app_id'] = '$org.$appName';
     }
   }
@@ -1771,8 +1750,9 @@ Future<void> _copyDirectory(
 
   await for (final entity in source.list(followLinks: false)) {
     final relative = p.relative(entity.path, from: rootPath);
-    final mappedRelative =
-        pathTokens == null ? relative : _applyTokens(relative, pathTokens);
+    final mappedRelative = pathTokens == null
+        ? relative
+        : _applyTokens(relative, pathTokens);
     final mappedPath = p.normalize(p.join(destination.path, mappedRelative));
     if (!p.isWithin(destination.path, mappedPath) &&
         mappedPath != destination.path) {
@@ -1905,7 +1885,10 @@ Future<bool> _commandExists(String command) async {
   return result.exitCode == 0;
 }
 
-Future<void> _runShellCommand(String command, Directory workingDirectory) async {
+Future<void> _runShellCommand(
+  String command,
+  Directory workingDirectory,
+) async {
   final shell = Platform.isWindows ? 'cmd' : 'bash';
   final args = Platform.isWindows ? ['/c', command] : ['-lc', command];
   final process = await Process.start(

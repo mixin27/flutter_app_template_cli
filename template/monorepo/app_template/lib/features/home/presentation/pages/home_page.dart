@@ -47,10 +47,7 @@ class _HomeView extends StatelessWidget {
                 style: Theme.of(context).textTheme.headlineSmall,
               ),
               const SizedBox(height: 8),
-              Text(
-                summary.focus,
-                style: Theme.of(context).textTheme.bodyLarge,
-              ),
+              Text(summary.focus, style: Theme.of(context).textTheme.bodyLarge),
               const SizedBox(height: 16),
               HomeMetricCard(
                 title: 'Open tasks',

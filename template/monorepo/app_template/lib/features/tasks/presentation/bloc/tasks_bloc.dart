@@ -9,12 +9,9 @@ import 'tasks_event.dart';
 import 'tasks_state.dart';
 
 class TasksBloc extends ResultBloc<TasksEvent, TasksState> with LoggerMixin {
-  TasksBloc(
-    this._getTasksUseCase,
-    this._toggleTaskUseCase, {
-    AppLogger? logger,
-  })  : _logger = logger ?? AppLogger(enabled: false),
-        super(const TasksState()) {
+  TasksBloc(this._getTasksUseCase, this._toggleTaskUseCase, {AppLogger? logger})
+    : _logger = logger ?? AppLogger(enabled: false),
+      super(const TasksState()) {
     on<TasksRequested>(_onTasksRequested);
     on<TaskCompletionToggled>(_onTaskCompletionToggled);
   }
@@ -47,10 +44,7 @@ class TasksBloc extends ResultBloc<TasksEvent, TasksState> with LoggerMixin {
       },
       onSuccess: (tasks) {
         log.info('Loaded ${tasks.length} tasks');
-        return state.copyWith(
-          status: TasksStatus.success,
-          tasks: tasks,
-        );
+        return state.copyWith(status: TasksStatus.success, tasks: tasks);
       },
     );
   }

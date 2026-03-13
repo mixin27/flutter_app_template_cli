@@ -25,18 +25,12 @@ void main() {
       requiredFeatures: const {AuthFeatureIds.tasks},
     );
 
-    expect(
-      strategy.requiresAuthenticationForPath('/tasks', registry),
-      isTrue,
-    );
+    expect(strategy.requiresAuthenticationForPath('/tasks', registry), isTrue);
     expect(
       strategy.requiresAuthenticationForPath('/profile', registry),
       isFalse,
     );
-    expect(
-      strategy.requiresAuthenticationForPath('/home', registry),
-      isFalse,
-    );
+    expect(strategy.requiresAuthenticationForPath('/home', registry), isFalse);
   });
 
   test('optional strategy does not protect paths', () {

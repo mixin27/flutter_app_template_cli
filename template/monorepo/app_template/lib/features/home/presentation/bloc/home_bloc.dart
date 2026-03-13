@@ -8,8 +8,8 @@ import 'home_state.dart';
 
 class HomeBloc extends ResultBloc<HomeEvent, HomeState> with LoggerMixin {
   HomeBloc(this._getHomeSummaryUseCase, {AppLogger? logger})
-      : _logger = logger ?? AppLogger(enabled: false),
-        super(const HomeState()) {
+    : _logger = logger ?? AppLogger(enabled: false),
+      super(const HomeState()) {
     on<HomeRequested>(_onHomeRequested);
   }
 
@@ -40,10 +40,7 @@ class HomeBloc extends ResultBloc<HomeEvent, HomeState> with LoggerMixin {
       },
       onSuccess: (summary) {
         log.info('Home summary loaded');
-        return state.copyWith(
-          status: HomeStatus.success,
-          summary: summary,
-        );
+        return state.copyWith(status: HomeStatus.success, summary: summary);
       },
     );
   }
