@@ -4,7 +4,25 @@ import 'dart:isolate';
 import 'package:args/args.dart';
 import 'package:path/path.dart' as p;
 
-Future<int> run(List<String> arguments) async {
+class CliLogger {
+  CliLogger({StringSink? out, StringSink? err})
+      : _out = out ?? stdout,
+        _err = err ?? stderr;
+
+  final StringSink _out;
+  final StringSink _err;
+
+  void out(String message) => _out.writeln(message);
+
+  void err(String message) => _err.writeln(message);
+}
+
+Future<int> run(
+  List<String> arguments, {
+  StringSink? out,
+  StringSink? err,
+}) async {
+  final logger = CliLogger(out: out, err: err);
   final parser = ArgParser()
     ..addFlag('help', abbr: 'h', negatable: false, help: 'Show usage.')
     ..addFlag('version', negatable: false, help: 'Show version.');
@@ -33,6 +51,11 @@ Future<int> run(List<String> arguments) async {
       abbr: 't',
       defaultsTo: '.',
       help: 'Output directory for the workspace.',
+    )
+    ..addFlag(
+      'skip-setup',
+      negatable: false,
+      help: 'Skip running workspace setup (env-init + setup-dev).',
     );
 
   parser.addCommand('create', createParser);
@@ -41,36 +64,38 @@ Future<int> run(List<String> arguments) async {
   try {
     results = parser.parse(arguments);
   } catch (error) {
-    _stderr('Error: $error');
-    _printUsage(parser);
+    logger.err('Error: $error');
+    _printUsage(parser, logger);
     return _ExitCodes.usage;
   }
 
   if (results['version'] == true) {
-    _stdout('flutter_app_template_cli 0.1.0');
+    final packageRoot = await _resolveTemplateRoot();
+    final version = await _readVersion(packageRoot);
+    logger.out('flutter_app_template_cli $version');
     return _ExitCodes.success;
   }
 
   if (results['help'] == true || results.command == null) {
-    _printUsage(parser);
+    _printUsage(parser, logger);
     return _ExitCodes.success;
   }
 
   final command = results.command!;
   if (command.name != 'create') {
-    _stderr('Unknown command: ${command.name}');
-    _printUsage(parser);
+    logger.err('Unknown command: ${command.name}');
+    _printUsage(parser, logger);
     return _ExitCodes.usage;
   }
 
   if (command['help'] == true) {
-    _printCreateUsage(parser, createParser);
+    _printCreateUsage(parser, createParser, logger);
     return _ExitCodes.success;
   }
 
   if (command.rest.isEmpty) {
-    _stderr('Missing workspace name.');
-    _printCreateUsage(parser, createParser);
+    logger.err('Missing workspace name.');
+    _printCreateUsage(parser, createParser, logger);
     return _ExitCodes.usage;
   }
 
@@ -81,20 +106,24 @@ Future<int> run(List<String> arguments) async {
   final org = (command['org'] as String).trim();
   final description = (command['description'] as String).trim();
   final outputDir = Directory(command['output'] as String).absolute;
+  final skipSetup = command['skip-setup'] == true;
 
   if (!_isValidPackageName(workspaceName)) {
-    _stderr('Invalid workspace name: $workspaceName');
-    _stderr('Use lowercase letters, numbers, and underscores only.');
+    logger.err('Invalid workspace name: $workspaceName');
+    logger.err('Use lowercase letters, numbers, and underscores only.');
     return _ExitCodes.usage;
   }
 
   if (!_isValidPackageName(appName)) {
-    _stderr('Invalid app name: $appName');
-    _stderr('Use lowercase letters, numbers, and underscores only.');
+    logger.err('Invalid app name: $appName');
+    logger.err('Use lowercase letters, numbers, and underscores only.');
     return _ExitCodes.usage;
   }
 
-  final generator = TemplateGenerator(await _resolveTemplateRoot());
+  final generator = TemplateGenerator(
+    await _resolveTemplateRoot(),
+    logger: logger,
+  );
   try {
     await generator.createWorkspace(
       workspaceName: workspaceName,
@@ -102,13 +131,14 @@ Future<int> run(List<String> arguments) async {
       org: org,
       description: description,
       outputDir: outputDir,
+      skipSetup: skipSetup,
     );
   } catch (error) {
-    _stderr('Failed to create workspace: $error');
+    logger.err('Failed to create workspace: $error');
     return _ExitCodes.software;
   }
 
-  _stdout('Workspace created at ${p.join(outputDir.path, workspaceName)}');
+  logger.out('Workspace created at ${p.join(outputDir.path, workspaceName)}');
   return _ExitCodes.success;
 }
 
@@ -136,33 +166,47 @@ Future<String> _resolveTemplateRoot() async {
   return p.normalize(p.join(p.dirname(scriptPath), '..'));
 }
 
+Future<String> _readVersion(String packageRoot) async {
+  final pubspec = File(p.join(packageRoot, 'pubspec.yaml'));
+  if (!await pubspec.exists()) {
+    return 'unknown';
+  }
+
+  final lines = await pubspec.readAsLines();
+  for (final line in lines) {
+    final match =
+        RegExp(r'^version:\s*([^\s#]+)').firstMatch(line.trim());
+    if (match != null) {
+      return match.group(1) ?? 'unknown';
+    }
+  }
+
+  return 'unknown';
+}
+
 bool _isValidPackageName(String value) {
   return RegExp(r'^[a-z][a-z0-9_]*$').hasMatch(value);
 }
 
-void _printUsage(ArgParser parser) {
-  _stdout('flutter_app_template_cli <command> [arguments]');
-  _stdout('');
-  _stdout('Available commands:');
-  _stdout('  create <workspace_name>    Generate a new monorepo workspace');
-  _stdout('');
-  _stdout('Options:');
-  _stdout(parser.usage);
+void _printUsage(ArgParser parser, CliLogger logger) {
+  logger.out('flutter_app_template_cli <command> [arguments]');
+  logger.out('');
+  logger.out('Available commands:');
+  logger.out('  create <workspace_name>    Generate a new monorepo workspace');
+  logger.out('');
+  logger.out('Options:');
+  logger.out(parser.usage);
 }
 
-void _printCreateUsage(ArgParser root, ArgParser createParser) {
-  _stdout('flutter_app_template_cli create <workspace_name> [options]');
-  _stdout('');
-  _stdout('Options:');
-  _stdout(createParser.usage);
-  _stdout('');
-  _stdout('Global options:');
-  _stdout(root.usage);
+void _printCreateUsage(ArgParser root, ArgParser createParser, CliLogger logger) {
+  logger.out('flutter_app_template_cli create <workspace_name> [options]');
+  logger.out('');
+  logger.out('Options:');
+  logger.out(createParser.usage);
+  logger.out('');
+  logger.out('Global options:');
+  logger.out(root.usage);
 }
-
-void _stdout(String message) => stdout.writeln(message);
-
-void _stderr(String message) => stderr.writeln(message);
 
 class _ExitCodes {
   const _ExitCodes._();
@@ -173,9 +217,13 @@ class _ExitCodes {
 }
 
 class TemplateGenerator {
-  TemplateGenerator(this._packageRoot);
+  TemplateGenerator(
+    this._packageRoot, {
+    CliLogger? logger,
+  }) : _logger = logger ?? CliLogger();
 
   final String _packageRoot;
+  final CliLogger _logger;
 
   Future<void> createWorkspace({
     required String workspaceName,
@@ -183,7 +231,10 @@ class TemplateGenerator {
     required String org,
     required String description,
     required Directory outputDir,
+    required bool skipSetup,
   }) async {
+    await _ensureRequiredCommands(skipSetup: skipSetup);
+
     final workspaceDir = Directory(p.join(outputDir.path, workspaceName));
     if (workspaceDir.existsSync()) {
       throw 'Target directory already exists: ${workspaceDir.path}';
@@ -224,9 +275,40 @@ class TemplateGenerator {
 
     await _ensureScriptsExecutable(workspaceDir);
 
-    await _runWorkspaceSetup(workspaceDir);
+    if (!skipSetup) {
+      await _runWorkspaceSetup(workspaceDir);
+    }
 
     await _cleanupScaffoldDirectories(workspaceDir);
+  }
+
+  Future<void> _ensureRequiredCommands({required bool skipSetup}) async {
+    final requiredCommands = <String>['flutter', 'git'];
+    if (!skipSetup) {
+      requiredCommands.addAll(['dart', 'make']);
+    }
+
+    final missing = <String>[];
+    for (final command in requiredCommands) {
+      if (!await _commandExists(command)) {
+        missing.add(command);
+      }
+    }
+
+    if (missing.isNotEmpty) {
+      throw 'Missing required command(s): ${missing.join(', ')}. '
+          'Install them and ensure they are available on your PATH.';
+    }
+  }
+
+  Future<bool> _commandExists(String command) async {
+    final result = await Process.run(
+      Platform.isWindows ? 'where' : 'command',
+      Platform.isWindows ? [command] : ['-v', command],
+      runInShell: true,
+    );
+
+    return result.exitCode == 0;
   }
 
   Future<void> _runFlutterCreate({
@@ -305,7 +387,7 @@ class TemplateGenerator {
       return;
     }
 
-    final envExamplePattern = RegExp(r'^env\\.(.+)\\.example\$');
+    final envExamplePattern = RegExp(r'^env\.(.+)\.example$');
     await for (final entity in envExamplesDir.list(followLinks: false)) {
       if (entity is! File) {
         continue;
@@ -401,21 +483,9 @@ class TemplateGenerator {
       );
 
       if (initResult.exitCode != 0) {
-        _stderr('git init failed: ${initResult.stderr}');
+        _logger.err('git init failed: ${initResult.stderr}');
         throw 'git init failed with exit code ${initResult.exitCode}';
       }
-    }
-
-    final huskyResult = await Process.run(
-      'dart',
-      ['run', 'husky', 'install'],
-      workingDirectory: workspaceDir.path,
-      runInShell: true,
-    );
-
-    if (huskyResult.exitCode != 0) {
-      _stderr('husky install failed: ${huskyResult.stderr}');
-      throw 'husky install failed with exit code ${huskyResult.exitCode}';
     }
 
     await _ensureHuskyHooks(workspaceDir);

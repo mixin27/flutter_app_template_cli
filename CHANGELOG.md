@@ -1,3 +1,8 @@
+## 0.1.4
+
+- Add cli tool logger helper
+- Add test for cli tool
+
 ## 0.1.3
 
 - Fixed deprecated usage in features

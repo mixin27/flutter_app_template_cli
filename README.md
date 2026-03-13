@@ -17,6 +17,12 @@ flutter_app_template_cli create my_workspace \
   --description "My Flutter app"
 ```
 
+Skip the automatic setup (useful if you want to run it later):
+
+```bash
+flutter_app_template_cli create my_workspace --skip-setup
+```
+
 ## What it creates
 
 ```
@@ -31,6 +37,9 @@ my_workspace/
 ```
 
 ## After creation
+
+By default, the CLI runs `make env-init` and `make setup-dev` for you. If you
+used `--skip-setup`, run the setup manually:
 
 ```bash
 cd my_workspace
