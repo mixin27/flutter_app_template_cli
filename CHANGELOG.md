@@ -1,3 +1,8 @@
+## 0.1.5
+
+- Updated dependencies
+- Updated README
+
 ## 0.1.4
 
 - Added multi-template support (built-in, local, git, archive).

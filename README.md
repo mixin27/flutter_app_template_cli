@@ -175,15 +175,11 @@ __WORKSPACE_NAME__
 1. Built-in templates may require `flutter`, `git`, and `make` to be installed.
 2. External templates do not assume Flutter tooling, but their scripts might.
 
-## Starter template included
+## Starter template demo
 
-This repo includes a ready-to-push starter template at:
+You can find a ready-to-push starter template at [demo_flutter_template](https://github.com/mixin27/demo_flutter_template)
 
-```
-examples/flutter_app_template
-```
-
-You can push that folder to its own Git repo and use it directly with:
+You can clone and push that template to its own Git repo and use it directly with:
 
 ```bash
 flutter_app_template_cli create my_workspace \
