@@ -51,6 +51,101 @@ void main() {
     expect(err.toString(), contains('Invalid workspace name'));
   });
 
+  test('errors when monorepo app name matches workspace name', () async {
+    final out = StringBuffer();
+    final err = StringBuffer();
+
+    final code = await cli.run(
+      [
+        'create',
+        'demo_workspace',
+        '--template',
+        'monorepo',
+        '--app-name',
+        'demo_workspace',
+      ],
+      out: out,
+      err: err,
+    );
+
+    expect(code, 64);
+    expect(
+      err.toString(),
+      contains('App name must differ from workspace name'),
+    );
+  });
+
+  test('template list shows built-ins', () async {
+    final out = StringBuffer();
+    final err = StringBuffer();
+
+    final code = await cli.run(['template', 'list'], out: out, err: err);
+
+    expect(code, 0);
+    expect(out.toString(), contains('monorepo'));
+    expect(err.toString(), isEmpty);
+  });
+
+  test('creates workspace from a local template', () async {
+    final tempDir = await Directory.systemTemp.createTemp(
+      'flutter_app_template_cli_local_',
+    );
+    addTearDown(() async {
+      if (await tempDir.exists()) {
+        await tempDir.delete(recursive: true);
+      }
+    });
+
+    final templateDir = Directory(p.join(tempDir.path, 'template'));
+    await templateDir.create(recursive: true);
+    await File(p.join(templateDir.path, 'template.yaml')).writeAsString('''
+name: local
+description: Local template
+variables:
+  custom:
+    description: Custom value
+    default: default-value
+''');
+    await File(p.join(templateDir.path, 'README.md')).writeAsString(
+      '# __WORKSPACE_NAME__\nCustom: {{custom}}\n',
+    );
+
+    final outputDir = Directory(p.join(tempDir.path, 'output'));
+    await outputDir.create(recursive: true);
+
+    final out = StringBuffer();
+    final err = StringBuffer();
+
+    final code = await cli.run(
+      [
+        'create',
+        'local_workspace',
+        '--template',
+        templateDir.path,
+        '--output',
+        outputDir.path,
+        '--var',
+        'custom=overridden',
+      ],
+      out: out,
+      err: err,
+    );
+
+    expect(code, 0, reason: err.toString());
+    final workspaceDir = Directory(p.join(outputDir.path, 'local_workspace'));
+    expect(workspaceDir.existsSync(), isTrue);
+    expect(
+      File(p.join(workspaceDir.path, 'template.yaml')).existsSync(),
+      isFalse,
+    );
+
+    final readme = File(p.join(workspaceDir.path, 'README.md'));
+    expect(readme.existsSync(), isTrue);
+    final content = await readme.readAsString();
+    expect(content, contains('# local_workspace'));
+    expect(content, contains('Custom: overridden'));
+  });
+
   final integrationEnabled =
       Platform.environment['RUN_INTEGRATION_TESTS'] == '1';
 
