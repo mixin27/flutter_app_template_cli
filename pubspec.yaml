@@ -1,6 +1,12 @@
 name: flutter_app_template_cli
 description: CLI to generate a Flutter monorepo workspace with apps/ and packages/.
 version: 0.1.0
+topics:
+  - flutter
+  - cli
+  - template
+  - monorepo
+  - scaffold
 
 environment:
   sdk: ^3.11.1
@@ -12,3 +18,6 @@ dependencies:
 dev_dependencies:
   lints: ^6.0.0
   test: ^1.25.6
+
+executables:
+  flutter_app_template_cli: flutter_app_template_cli
