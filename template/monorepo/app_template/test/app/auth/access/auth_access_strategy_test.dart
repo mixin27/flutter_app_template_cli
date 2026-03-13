@@ -1,9 +1,9 @@
-import 'package:flutter_test/flutter_test.dart';
 import 'package:__APP_NAME__/app/auth/access/auth_access_strategy.dart';
 import 'package:__APP_NAME__/app/auth/access/auth_feature_ids.dart';
 import 'package:__APP_NAME__/app/auth/access/auth_feature_registry.dart';
 import 'package:__APP_NAME__/app/config/auth_gate_mode.dart';
 import 'package:__APP_NAME__/app/router/app_route_paths.dart';
+import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   const registry = AuthFeatureRegistry(

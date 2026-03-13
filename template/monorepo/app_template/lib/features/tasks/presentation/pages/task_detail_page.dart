@@ -45,8 +45,8 @@ class _TaskStatusChip extends StatelessWidget {
     return Chip(
       label: Text(isCompleted ? 'Completed' : 'In progress'),
       backgroundColor: isCompleted
-          ? Colors.green.withOpacity(0.15)
-          : Colors.orange.withOpacity(0.15),
+          ? Colors.green.withValues(alpha: 0.15)
+          : Colors.orange.withValues(alpha: 0.15),
       labelStyle: TextStyle(
         color: isCompleted ? Colors.green : Colors.orange,
         fontWeight: FontWeight.w600,

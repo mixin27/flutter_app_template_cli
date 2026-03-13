@@ -56,11 +56,18 @@ esac
 
 root="$(workspace_root)"
 source_template="${root}/.env.${environment}.example"
+fallback_template="${root}/env_examples/env.${environment}.example"
 target_env="${root}/.env"
 
-if [[ ! -f "${source_template}" ]]; then
-  echo "Template not found: ${source_template}" >&2
-  exit 1
+template_path="${source_template}"
+if [[ ! -f "${template_path}" ]]; then
+  if [[ -f "${fallback_template}" ]]; then
+    template_path="${fallback_template}"
+  else
+    echo "Template not found: ${source_template}" >&2
+    echo "Fallback template not found: ${fallback_template}" >&2
+    exit 1
+  fi
 fi
 
 if [[ -f "${target_env}" && ${force} -ne 1 ]]; then
@@ -68,7 +75,7 @@ if [[ -f "${target_env}" && ${force} -ne 1 ]]; then
   exit 1
 fi
 
-cp "${source_template}" "${target_env}"
+cp "${template_path}" "${target_env}"
 
-echo "Created .env from .env.${environment}.example"
+echo "Created .env from $(basename "${template_path}")"
 echo "Next: run 'make codegen' after editing .env values."

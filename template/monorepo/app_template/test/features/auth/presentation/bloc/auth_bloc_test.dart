@@ -1,6 +1,3 @@
-import 'package:app_core/app_core.dart';
-import 'package:app_network/app_network.dart';
-import 'package:flutter_test/flutter_test.dart';
 import 'package:__APP_NAME__/features/auth/domain/entities/auth_login_method.dart';
 import 'package:__APP_NAME__/features/auth/domain/entities/auth_session.dart';
 import 'package:__APP_NAME__/features/auth/domain/entities/phone_otp_challenge.dart';
@@ -14,6 +11,9 @@ import 'package:__APP_NAME__/features/auth/domain/usecases/verify_phone_otp_use_
 import 'package:__APP_NAME__/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:__APP_NAME__/features/auth/presentation/bloc/auth_event.dart';
 import 'package:__APP_NAME__/features/auth/presentation/bloc/auth_state.dart';
+import 'package:app_core/app_core.dart';
+import 'package:app_network/app_network.dart';
+import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   test('AppStarted emits unauthenticated when no session', () async {

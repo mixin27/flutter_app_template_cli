@@ -1,11 +1,11 @@
-import 'package:app_core/app_core.dart';
-import 'package:app_network/app_network.dart';
-import 'package:flutter_test/flutter_test.dart';
 import 'package:__APP_NAME__/features/auth/data/datasources/auth_local_data_source.dart';
 import 'package:__APP_NAME__/features/auth/data/datasources/auth_remote_data_source.dart';
 import 'package:__APP_NAME__/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:__APP_NAME__/features/auth/domain/entities/auth_login_method.dart';
 import 'package:__APP_NAME__/features/auth/domain/entities/phone_otp_challenge.dart';
+import 'package:app_core/app_core.dart';
+import 'package:app_network/app_network.dart';
+import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   test('returns authenticated session when local tokens exist', () async {
