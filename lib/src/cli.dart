@@ -1000,6 +1000,7 @@ class MonorepoTemplate implements Template {
     }
 
     await _copyDirectory(templateDir, context.workspaceDir);
+    await _restoreHiddenTemplateEntries(context.workspaceDir);
     await _ensureGitignore(context.workspaceDir);
     await _ensureEnvExampleTemplates(context.workspaceDir);
     await _ensureWorkspaceDirectories(context.workspaceDir);
@@ -1057,6 +1058,51 @@ class MonorepoTemplate implements Template {
       throw 'Missing required command(s): ${missing.join(', ')}. '
           'Install them and ensure they are available on your PATH.';
     }
+  }
+
+  Future<void> _restoreHiddenTemplateEntries(Directory workspaceDir) async {
+    // Pub packages omit hidden entries, so keep template dotfiles under
+    // underscore-prefixed names and restore them after copying.
+    const hiddenEntries = <String, String>{
+      '_github': '.github',
+      '_vscode': '.vscode',
+      '_husky': '.husky',
+      '_gitleaks.toml': '.gitleaks.toml',
+    };
+
+    for (final entry in hiddenEntries.entries) {
+      final sourcePath = p.join(workspaceDir.path, entry.key);
+      final targetPath = p.join(workspaceDir.path, entry.value);
+
+      final sourceDir = Directory(sourcePath);
+      if (sourceDir.existsSync()) {
+        await _moveDirectory(sourceDir, Directory(targetPath));
+        continue;
+      }
+
+      final sourceFile = File(sourcePath);
+      if (sourceFile.existsSync()) {
+        await _moveFile(sourceFile, File(targetPath));
+      }
+    }
+  }
+
+  Future<void> _moveDirectory(Directory source, Directory target) async {
+    if (target.existsSync()) {
+      await _copyDirectory(source, target, overwrite: false);
+      await source.delete(recursive: true);
+      return;
+    }
+    await source.rename(target.path);
+  }
+
+  Future<void> _moveFile(File source, File target) async {
+    if (target.existsSync()) {
+      await source.delete();
+      return;
+    }
+    await target.parent.create(recursive: true);
+    await source.rename(target.path);
   }
 
   Future<void> _runFlutterCreate({

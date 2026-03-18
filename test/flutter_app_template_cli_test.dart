@@ -225,6 +225,18 @@ variables:
         isTrue,
       );
       expect(
+        Directory(p.join(workspaceDir.path, '.github')).existsSync(),
+        isTrue,
+      );
+      expect(
+        Directory(p.join(workspaceDir.path, '.vscode')).existsSync(),
+        isTrue,
+      );
+      expect(
+        File(p.join(workspaceDir.path, '.gitleaks.toml')).existsSync(),
+        isTrue,
+      );
+      expect(
         Directory(p.join(workspaceDir.path, 'env_examples')).existsSync(),
         isFalse,
       );
