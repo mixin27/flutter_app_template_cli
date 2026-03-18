@@ -83,6 +83,7 @@ void main() {
 
     expect(code, 0);
     expect(out.toString(), contains('monorepo'));
+    expect(out.toString(), contains('bloc_app'));
     expect(err.toString(), isEmpty);
   });
 

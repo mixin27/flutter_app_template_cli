@@ -650,6 +650,12 @@ class TemplateManager {
       description: 'Flutter monorepo workspace with app template.',
       builder: () => MonorepoTemplate(_packageRoot, logger: _logger),
     );
+    _builtIns['bloc_app'] = BuiltInTemplateDescriptor(
+      name: 'bloc_app',
+      description:
+          'Single Flutter app with BLoC, clean architecture, and Drift.',
+      builder: () => BlocAppTemplate(_packageRoot),
+    );
   }
 
   final String _packageRoot;
@@ -1301,6 +1307,150 @@ class MonorepoTemplate implements Template {
     if (hooksDir.existsSync()) {
       await hooksDir.delete(recursive: true);
     }
+  }
+}
+
+class BlocAppTemplate implements Template {
+  BlocAppTemplate(this._packageRoot);
+
+  final String _packageRoot;
+
+  @override
+  String get name => 'bloc_app';
+
+  @override
+  String get description =>
+      'Single Flutter app with BLoC, clean architecture, and Drift.';
+
+  @override
+  TemplateKind get kind => TemplateKind.builtIn;
+
+  @override
+  Future<void> generate(TemplateContext context) async {
+    await _ensureRequiredCommands();
+
+    if (context.workspaceDir.existsSync()) {
+      throw 'Target directory already exists: ${context.workspaceDir.path}';
+    }
+
+    final templateDir = Directory(p.join(_packageRoot, 'template', 'bloc_app'));
+    if (!templateDir.existsSync()) {
+      throw 'Template directory not found: ${templateDir.path}';
+    }
+
+    final appTemplateDir = Directory(p.join(templateDir.path, 'app_template'));
+    if (!appTemplateDir.existsSync()) {
+      throw 'Missing app_template in template.';
+    }
+
+    await _runFlutterCreate(
+      appDir: context.workspaceDir,
+      appName: context.appName,
+      org: context.org,
+      description: context.description,
+    );
+
+    await _copyDirectory(appTemplateDir, context.workspaceDir, overwrite: true);
+    await _restoreHiddenTemplateEntries(context.workspaceDir);
+    await _ensureGitignore(context.workspaceDir);
+    await _replaceTokensInDirectory(
+      context.workspaceDir,
+      _buildTokenMap(context.variables),
+    );
+  }
+
+  Future<void> _ensureRequiredCommands() async {
+    if (!await _commandExists('flutter')) {
+      throw 'Missing required command(s): flutter. '
+          'Install it and ensure it is available on your PATH.';
+    }
+  }
+
+  Future<void> _restoreHiddenTemplateEntries(Directory workspaceDir) async {
+    // Pub packages omit hidden entries, so keep template dotfiles under
+    // underscore-prefixed names and restore them after copying.
+    const hiddenEntries = <String, String>{
+      '_github': '.github',
+      '_vscode': '.vscode',
+      '_husky': '.husky',
+      '_gitleaks.toml': '.gitleaks.toml',
+    };
+
+    for (final entry in hiddenEntries.entries) {
+      final sourcePath = p.join(workspaceDir.path, entry.key);
+      final targetPath = p.join(workspaceDir.path, entry.value);
+
+      final sourceDir = Directory(sourcePath);
+      if (sourceDir.existsSync()) {
+        await _moveDirectory(sourceDir, Directory(targetPath));
+        continue;
+      }
+
+      final sourceFile = File(sourcePath);
+      if (sourceFile.existsSync()) {
+        await _moveFile(sourceFile, File(targetPath));
+      }
+    }
+  }
+
+  Future<void> _moveDirectory(Directory source, Directory target) async {
+    if (target.existsSync()) {
+      await _copyDirectory(source, target, overwrite: false);
+      await source.delete(recursive: true);
+      return;
+    }
+    await source.rename(target.path);
+  }
+
+  Future<void> _moveFile(File source, File target) async {
+    if (target.existsSync()) {
+      await source.delete();
+      return;
+    }
+    await target.parent.create(recursive: true);
+    await source.rename(target.path);
+  }
+
+  Future<void> _runFlutterCreate({
+    required Directory appDir,
+    required String appName,
+    required String org,
+    required String description,
+  }) async {
+    final args = <String>[
+      'create',
+      '--org',
+      org,
+      '--project-name',
+      appName,
+      '--description',
+      description,
+      appDir.path,
+    ];
+
+    final process = await Process.start('flutter', args, runInShell: true);
+
+    await stdout.addStream(process.stdout);
+    await stderr.addStream(process.stderr);
+
+    final exitCode = await process.exitCode;
+    if (exitCode != 0) {
+      throw 'flutter create failed with exit code $exitCode';
+    }
+  }
+
+  Future<void> _ensureGitignore(Directory workspaceDir) async {
+    final source = File(p.join(workspaceDir.path, 'gitignore'));
+    if (!source.existsSync()) {
+      return;
+    }
+
+    final target = File(p.join(workspaceDir.path, '.gitignore'));
+    if (!target.existsSync()) {
+      await source.copy(target.path);
+    }
+
+    await source.delete();
   }
 }
 

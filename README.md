@@ -3,7 +3,7 @@
 Generate Flutter workspaces from built-in or third-party templates.
 
 This CLI supports:
-1. Built-in templates (current monorepo and future ones).
+1. Built-in templates (`monorepo`, `bloc_app`).
 2. Local template directories.
 3. Git repositories (HTTPS or SSH).
 4. Template archives (`.zip`, `.tar`, `.tar.gz`, `.tgz`) with optional checksums.
@@ -14,7 +14,9 @@ This CLI supports:
 dart pub global activate flutter_app_template_cli
 ```
 
-## Quick start (built-in monorepo)
+## Quick start (built-in templates)
+
+Monorepo:
 
 ```bash
 flutter_app_template_cli create my_workspace \
@@ -33,12 +35,25 @@ you want to run it later:
 flutter_app_template_cli create my_workspace --skip-setup
 ```
 
+BLoC app:
+
+```bash
+flutter_app_template_cli create my_app \
+  --template bloc_app \
+  --org com.example \
+  --description "My Flutter app"
+```
+
 ## Use cases
 
 ### 1. Use a built-in template explicitly
 
 ```bash
 flutter_app_template_cli create my_workspace --template monorepo
+```
+
+```bash
+flutter_app_template_cli create my_app --template bloc_app
 ```
 
 ### 2. Use a local template directory
