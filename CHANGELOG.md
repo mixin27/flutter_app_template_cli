@@ -1,3 +1,8 @@
+## 0.1.6
+
+- Fixed some folders and files are not included in monorepo template
+- Added new template: `bloc_app` structured by feature based, clean architecture and BLoC state management
+
 ## 0.1.5
 
 - Updated dependencies
